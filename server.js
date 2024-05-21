@@ -42,7 +42,7 @@ app.get("/SignIn", (req, res) => {
     const agenteEmail = agentes.find((a) => a.email == email);
     if (agente) {
         console.log("Agente con credenciales correctas")
-        const token = jwt.sign(agente, secretKey, { expiresIn: '2m' });
+        const token = jwt.sign(agente, secretKey, { expiresIn: '1m' });
         console.log("Valor variable token ruta SignIn: " + token);
         res.status(200).send(`
             <h1>Bienvenido, ${email}</h1>
@@ -79,13 +79,26 @@ app.get('/restricted', (req, res) => {
     } else {
         jwt.verify(token, secretKey, (err, data) => {
             console.log("Valor de Data: ", data);
-            err ?
-                res.status(403).send(`
-                <h1>¡Usuario no autorizado!</h1>
-                <p><b><u>Token inválido o ha expirado: ${err.message}</u></b></p>
-                ${btn}`)
-                :
-                res.status(200).send(`<h1>¡Bienvenido a la ruta restringida ${data.email}!</h1>`);
+            if (err) {
+                console.log("valor de err: " + err)
+                if (err.name == 'TokenExpiredError') {
+                    // Token expirado
+                    return res.status(403).send(`
+                    <h1>¡Usuario no autorizado!</h1>
+                    <p><b><u>El token ha expirado: ${err.message} (${err.expiredAt.toString().slice(16, 24)})</u></b></p>
+                    ${btn}`);
+                } else {
+                    // Token invalido
+                    return res.status(403).send(`
+                    <h1>¡Usuario no autorizado!</h1>
+                    <p><b><u>El token es invalido: ${err.message}</u></b></p>
+                    ${btn}`);
+                }
+            } else {
+                // Token válido
+                console.log("Valor de Data: ", data);
+                return res.status(200).send(`<h1>¡Bienvenido a la ruta restringida ${data.email}!</h1>`);
+            }
         });
     }
 });
