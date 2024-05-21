@@ -11,7 +11,8 @@ app.listen(PORT, () => {
     console.log(`Servidor Express iniciado en el puerto ${PORT}`);
 });
 
-const secretKey = "claveUltraMegaSecreta"
+const secretKey = "claveUltraMegaSecreta";
+const btn = `<button><a href="http://localhost:3000/">Volver</a></button>`;
 // 1. Crear una ruta que autentique a un agente basado en sus credenciales y genere un
 // token con sus datos.
 app.get("/", (req, res) => {
@@ -20,26 +21,29 @@ app.get("/", (req, res) => {
         return res.sendFile(__dirname + '/index.html');
     } catch (error) {
         console.log("Error del servidor: ", error.message);
-        return res.status(500).send({ message: "Error interno del servidor: " + error.message });
+        return res.status(500).send(`Error interno del servidor: ${error.message}`);
     }
 });
+
 // 2. Al autenticar un agente, devolver un HTML que:
 // a. Muestre el email del agente autorizado.
 // b. Guarde un token en SessionStorage con un tiempo de expiración de 2 minutos.
 // c. Disponibiliza un hiperenlace para redirigir al agente a una ruta restringida.
 app.get("/SignIn", (req, res) => {
-
     const { email, password } = req.query
     console.log("req.query recibido desde el front: ", req.query)
     if (!email || !password) {
         console.log("status 400: Debe proporcionar un email y un password")
-        return res.status(400).send("<h2>¡Debe proporcionar un email y un password!</h2>");
+        return res.status(400).send(`
+        <h2>¡Debe proporcionar un email y un password!</h2>
+        ${btn}`);
     }
     const agente = agentes.find((a) => a.email == email && a.password == password);
     const agenteEmail = agentes.find((a) => a.email == email);
     if (agente) {
         console.log("Agente con credenciales correctas")
         const token = jwt.sign(agente, secretKey, { expiresIn: '2m' });
+        console.log("Valor variable token ruta SignIn: " + token);
         res.status(200).send(`
             <h1>Bienvenido, ${email}</h1>
             <a href="/restricted?token=${token}"> <p><b>Ir a la ruta **Restringida** &#128373;</b></p></a>
@@ -49,11 +53,15 @@ app.get("/SignIn", (req, res) => {
         );
     } else if (agenteEmail == undefined) {
         console.log(`status 401: Este email ${email} de agente no existe`)
-        return res.status(401).send("<h2>¡Este email no existe! Intente nuevamente</h2>");
+        return res.status(401).send(`
+        <h2>¡Este email no existe! Intente nuevamente</h2>
+        ${btn}`);
     }
     else {
         console.log("status 401: Contraseña incorrecta")
-        return res.status(401).send("<h2>¡Contraseña incorrecta! Intente nuevamente</h2>");
+        return res.status(401).send(`
+        <h2>¡Contraseña incorrecta! Intente nuevamente</h2>
+        ${btn}`);
     }
 });
 
@@ -63,18 +71,21 @@ app.get("/SignIn", (req, res) => {
 app.get('/restricted', (req, res) => {
     console.log("Agente ingreso a la ruta Restringida")
     const token = req.query.token;
+    console.log("Valor variable token ruta restricted: " + token);
     if (!token) {
-        return res.status(401).send("No hay token, no esta Autorizado");
+        return res.status(401).send(`
+        <h1>¡No hay token, no esta Autorizado!</h1>
+        ${btn}`);
     } else {
         jwt.verify(token, secretKey, (err, data) => {
             console.log("Valor de Data: ", data);
             err ?
-                res.status(403).send(`<h1>¡Usuario no autorizado!</h1>
-                <p><b><u>Token inválido o ha expirado: ${err.message}</u></b></p>`)
+                res.status(403).send(`
+                <h1>¡Usuario no autorizado!</h1>
+                <p><b><u>Token inválido o ha expirado: ${err.message}</u></b></p>
+                ${btn}`)
                 :
                 res.status(200).send(`<h1>¡Bienvenido a la ruta restringida ${data.email}!</h1>`);
         });
     }
 });
-
-
