@@ -12,7 +12,8 @@ app.listen(PORT, () => {
 });
 
 const secretKey = "claveUltraMegaSecreta";
-const btn = `<button><a href="http://localhost:3000/">Volver</a></button>`;
+const btn = `<p><button><a href="http://localhost:3000/">Volver</a></button></p>`;
+const mib = `<img src="https://s3.us-west-2.amazonaws.com/s3.laprensa.com.ni-bq/wp-content/uploads/2017/09/29160805/men-in-black.jpg" width="400" height="300"></img>`;
 // 1. Crear una ruta que autentique a un agente basado en sus credenciales y genere un
 // token con sus datos.
 app.get("/", (req, res) => {
@@ -35,7 +36,7 @@ app.get("/SignIn", (req, res) => {
     if (!email || !password) {
         console.log("status 400: Debe proporcionar un email y un password")
         return res.status(400).send(`
-        <h2>¡Debe proporcionar un email y un password!</h2>
+        <h1>¡Debe proporcionar un email y un password!</h1>
         ${btn}`);
     }
     const agente = agentes.find((a) => a.email == email && a.password == password);
@@ -46,7 +47,7 @@ app.get("/SignIn", (req, res) => {
         console.log("Valor variable token ruta SignIn: " + token);
         res.status(200).send(`
             <h1>Bienvenido, ${email}</h1>
-            <a href="/restricted?token=${token}"> <p><b>Ir a la ruta **Restringida** &#128373;</b></p></a>
+            <a href="/restricted?token=${token}"> <h2><b>Ir a la ruta **Restringida** &#128373;</b></h2></a>
             <script>
                 sessionStorage.setItem('token', '${token}')
             </script>`
@@ -54,13 +55,13 @@ app.get("/SignIn", (req, res) => {
     } else if (agenteEmail == undefined) {
         console.log(`status 401: Este email ${email} de agente no existe`)
         return res.status(401).send(`
-        <h2>¡Este email no existe! Intente nuevamente</h2>
+        <h1>¡Este email no existe! Intente nuevamente</h1>
         ${btn}`);
     }
     else {
         console.log("status 401: Contraseña incorrecta")
         return res.status(401).send(`
-        <h2>¡Contraseña incorrecta! Intente nuevamente</h2>
+        <h1>¡Contraseña incorrecta! Intente nuevamente</h1>
         ${btn}`);
     }
 });
@@ -84,20 +85,23 @@ app.get('/restricted', (req, res) => {
                 if (err.name == 'TokenExpiredError') {
                     // Token expirado
                     return res.status(403).send(`
-                    <h1>¡Usuario no autorizado!</h1>
+                    <h1>¡Usuario no autorizado! - Acceso Denegado</h1>
                     <p><b><u>El token ha expirado: ${err.message} (${err.expiredAt.toString().slice(16, 24)})</u></b></p>
+                    ${mib}
                     ${btn}`);
                 } else {
                     // Token invalido
                     return res.status(403).send(`
-                    <h1>¡Usuario no autorizado!</h1>
+                    <h1>¡Usuario no autorizado! - Acceso Denegado</h1>
                     <p><b><u>El token es invalido: ${err.message}</u></b></p>
+                    ${mib}
                     ${btn}`);
                 }
             } else {
-                // Token válido
                 console.log("Valor de Data: ", data);
-                return res.status(200).send(`<h1>¡Bienvenido a la ruta restringida ${data.email}!</h1>`);
+                return res.status(200).send(`
+                <h1>¡Bienvenido a la ruta restringida ${data.email}!</h1>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/da/Seal_of_the_Federal_Bureau_of_Investigation.svg" width="300" height="250">`);
             }
         });
     }
