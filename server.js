@@ -47,7 +47,7 @@ app.get("/SignIn", (req, res) => {
         const agenteEmail = agentes.find((a) => a.email == email);
         if (agente) {
             console.log("Agente con credenciales correctas")
-            const token = jwt.sign(agente, secretKey, { expiresIn: '1m' });
+            const token = jwt.sign(agente, secretKey, { expiresIn: '2m' });
             console.log("Valor variable token ruta SignIn: " + token);
             res.status(200).send(`
             <h1>Bienvenido, ${email}</h1>
